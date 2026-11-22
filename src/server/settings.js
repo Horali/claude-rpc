@@ -31,7 +31,7 @@ import { listVisibility, setCwdVisibility } from '../privacy.js';
 import { VERSION } from '../version.js';
 
 // Every status the card can render, in the order the page lists them.
-export const STATUSES = ['working', 'thinking', 'compacting', 'shipped', 'notification', 'idle'];
+export const STATUSES = ['working', 'thinking', 'compacting', 'shipped', 'notification', 'chatting', 'idle'];
 const VIS_LEVELS = ['public', 'name-only', 'hidden'];
 const MAX_CONFIG_BYTES = 256 * 1024;
 

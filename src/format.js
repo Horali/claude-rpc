@@ -136,6 +136,7 @@ function statusVerbose(status, currentToolPretty, idleMs) {
     case 'thinking': return 'Thinking';
     case 'compacting': return 'Compacting context';
     case 'notification': return 'Waiting on you';
+    case 'chatting': return 'Chatting';
     case 'idle': {
       if (idleMs && idleMs > 60_000) {
         const mins = Math.floor(idleMs / 60_000);
@@ -872,7 +873,23 @@ function borrowLiveSession(state, liveSessions, now) {
 // the ground truth for "is the user active anywhere right now?". The local
 // state.json only knows about hook-driven activity in this exact daemon
 // instance, so we trust on-disk transcript mtimes over a stale state.json.
+// 'chatting' = Claude finished its turn and it's the user's move (reading,
+// typing). It only becomes real 'idle' after chatIdleMin (default 10) minutes
+// with no hook activity, so the card doesn't read "idle" mid-conversation.
+export function applyChatting(state, cfg = {}) {
+  if (!state || state.status !== 'idle') return state;
+  // Default config sets chatIdleMin: 10; a bare cfg (tests, previews) keeps
+  // the original idle behaviour.
+  const chatMs = Math.max(0, (cfg.chatIdleMin ?? 0) * 60 * 1000);
+  const ageMs = Date.now() - (state.lastActivity || 0);
+  return ageMs < chatMs ? { ...state, status: 'chatting' } : state;
+}
+
 export function applyIdle(state, cfg = {}) {
+  return applyChatting(applyIdleRaw(state, cfg), cfg);
+}
+
+function applyIdleRaw(state, cfg = {}) {
   const liveSessions = state.liveSessions || [];
   const last = state.lastActivity || 0;
   const now = Date.now();

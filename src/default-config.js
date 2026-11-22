@@ -52,6 +52,9 @@ export const DEFAULT_CONFIG = {
   presenceKeepaliveSec: null,
   rescanIntervalSec: 300,
   idleThresholdSec: 60,
+  // After Claude finishes, show 'chatting' (your turn) until this many minutes
+  // pass with no activity; only then switch to the real 'idle' card.
+  chatIdleMin: 10,
   // Time (minutes) of no hook activity AND no live transcripts on disk before
   // the daemon treats Claude Code as "not running". Kept short on purpose:
   // when Claude isn't open, the Discord presence should disappear quickly.
@@ -184,6 +187,7 @@ export const DEFAULT_CONFIG = {
     thinking:     "https://cdn.qualit.ly/clawd-working-typing.gif",
     compacting:   "https://cdn.qualit.ly/clawd-working-typing.gif",
     shipped:      "https://cdn.qualit.ly/clawd-working-building.gif",
+    chatting:     "https://cdn.qualit.ly/clawd-working-typing.gif",
     idle:         "https://cdn.qualit.ly/clawd-sleeping.gif",
     stale:        "https://cdn.qualit.ly/clawd-sleeping.gif",
     notification: "https://cdn.qualit.ly/clawd-notification.gif",
@@ -235,6 +239,11 @@ export const DEFAULT_CONFIG = {
         state:   "{modelPretty} · {messagesLabel}",
         largeImageText: "Permission needed",
       },
+      chatting: {
+        details: "Chatting in {project}",
+        state:   "{modelPretty} · {todayHours} today",
+        largeImageText: "Chatting with {modelPretty}",
+      },
       idle: {
         details: "Idle in {project}",
         state:   "{modelPretty} · {todayHours} today",
@@ -276,6 +285,7 @@ export const DEFAULT_CONFIG = {
     thinking:     "thinking",
     compacting:   "thinking",
     shipped:      "working",
+    chatting:     "thinking",
     idle:         "idle",
     notification: "",
     stale:        "",
