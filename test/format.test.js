@@ -775,3 +775,19 @@ test('buildVars: concurrent list applies the username-leak guard', () => {
     process.env.HOME = savedHome;
   }
 });
+
+// ── chatting (your turn) vs real idle ─────────────────────────────────────
+test('applyIdle: idle within chatIdleMin → chatting', () => {
+  const s = applyIdle({ status: 'idle', lastActivity: Date.now() - 60_000, claudeProcessAlive: true }, { chatIdleMin: 10 });
+  assert.equal(s.status, 'chatting');
+});
+
+test('applyIdle: idle past chatIdleMin → idle', () => {
+  const s = applyIdle({ status: 'idle', lastActivity: Date.now() - 11 * 60_000, claudeProcessAlive: true }, { chatIdleMin: 10 });
+  assert.equal(s.status, 'idle');
+});
+
+test('applyIdle: working is never turned into chatting', () => {
+  const s = applyIdle({ status: 'working', lastActivity: Date.now(), claudeProcessAlive: true }, { chatIdleMin: 10 });
+  assert.equal(s.status, 'working');
+});
