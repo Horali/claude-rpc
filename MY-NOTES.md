@@ -25,8 +25,13 @@ This is my own copy of [rar-file/claude-rpc](https://github.com/rar-file/claude-
 - Party size "(2 of 2)" off (`showPartySize: false`).
 - My private repos show as "PrivateRepo" via a git-ignored `.claude-rpc.json` in each.
 
+## Code changes done
+
+- New `chatting` status: after Claude finishes, card says "Chatting in …" (main line only).
+  Only after `chatIdleMin` (10) minutes with no activity does it become real "Idle" with the stats rotation.
+- Card setup: Working = main line only · Chatting = main line only · Idle = usage %, lifetime hours/prompts, lifetime tokens/tools.
+
 ## Ideas to build (code changes)
 
-- Real idle only after 10 min with no reply from me; before that keep the "Chatting" card.
 - Every GitHub-private repo shows as "PrivateRepo" automatically (today it's hidden unless the repo has a `.claude-rpc.json`).
 - Remove parts I don't use (leaderboard, community stats, worker, dashboard app, "Get claude-rpc" button).
