@@ -37,7 +37,7 @@ This is my own copy of [rar-file/claude-rpc](https://github.com/rar-file/claude-
 
 ## Active tasks
 
-- Activity Controller link (Phase 2): task file `handoffs/phase2-connect-projects.md` in the DiscordActivityController repo.
+- Activity Controller link (Phase 2): task file `handoffs/phase5-phone-control.md` in the DiscordActivityController repo.
 
 ## Ideas to build (code changes)
 
