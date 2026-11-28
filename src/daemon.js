@@ -11,6 +11,7 @@ import { detectClaudeProcess } from './claude-proc.js';
 import { detectGithubUrl } from './git.js';
 import { applyPrivacy } from './privacy.js';
 import { pauseUntil } from './pause.js';
+import { startControllerLight, lightBlocks, checkinState } from './controller-light.js';
 import { loadConfig } from './config.js';
 import { selfHealOnUpdate } from './install.js';
 import { VERSION } from './version.js';
@@ -449,6 +450,8 @@ function fireStatusSideEffects(resolved, suppressed = false) {
 // tick, config/scan/session refreshes); transmit() collapses that into at most
 // one Discord write per activityGapMs(), so callers never have to think about
 // the rate limit. Best-effort throughout — presence must never crash the daemon.
+let controllerLight = null; // set at start-up, see startControllerLight below
+let lightInputs = {};
 function pushPresence() {
   if (!connected || !client?.user) return;
   try {
@@ -463,26 +466,33 @@ function pushPresence() {
     // is in the future. Re-checked every tick, so expiry resumes presence
     // automatically (the next frame's hash differs from the cleared sentinel).
     const pausedUntil = pauseUntil();
-    const suppressed = privacyHidden || !!pausedUntil || (resolved.status === 'stale' && hideWhenStale);
+    const ownSuppressed = privacyHidden || !!pausedUntil || (resolved.status === 'stale' && hideWhenStale);
+    // Activity Controller (controller-light.js): red/wait clears the card too.
+    const light = controllerLight ? controllerLight.light() : 'none';
+    const suppressed = ownSuppressed || lightBlocks(light);
+    const activity = ownSuppressed ? null : buildActivity(resolved);
+    lightInputs = { pausedUntil, privacyHidden, stale: resolved.status === 'stale', hideWhenStale, status: resolved.status, activity };
 
     // Outbound side-effects on a status TRANSITION (fire once per change): a
     // desktop notification when Claude needs you, and an opt-in webhook POST.
     // Suppressed while paused / privacy=hidden — those snooze the card, and a
     // toast or webhook leaking the project name would defeat that.
-    fireStatusSideEffects(resolved, suppressed);
+    fireStatusSideEffects(resolved, ownSuppressed);
 
     if (suppressed) {
       // Wipe effectiveSessionStart so the next active push gets a fresh
       // elapsed timer rather than counting from a previous session.
-      effectiveSessionStart = null;
-      const reason = pausedUntil
+      // (Not for a controller red: the session goes on, only another card wins.)
+      if (ownSuppressed) effectiveSessionStart = null;
+      const reason = !ownSuppressed
+        ? `controller says ${light}`
+        : pausedUntil
         ? `paused until ${new Date(pausedUntil).toLocaleTimeString()}`
         : privacyHidden ? 'privacy=hidden in this project' : 'stale — Claude Code not running';
       transmit('clear', null, `Presence cleared (${reason})`);
       return;
     }
 
-    const activity = buildActivity(resolved);
     transmit('set', activity, `Presence updated: ${activity.details || '-'} | ${activity.state || '-'}`);
   } catch (e) {
     log('pushPresence failed:', e.message);
@@ -922,6 +932,12 @@ log('Claude RPC daemon starting. clientId=', config.clientId);
 if (!config.clientId || config.clientId === '1234567890123456789') {
   log('WARNING: config.json contains the placeholder clientId.');
 }
+
+// Activity Controller link: check in every 2 s; a light change pushes at once.
+controllerLight = startControllerLight({
+  getState: () => checkinState({ ...lightInputs, shown: connected && lastSentHash !== '' && lastSentHash !== CLEAR_HASH }),
+  onChange: (l) => { log(`controller light: ${l}`); pushPresence(); },
+});
 
 connect();
 watchFiles();
