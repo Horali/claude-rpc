@@ -31,6 +31,14 @@ This is my own copy of [rar-file/claude-rpc](https://github.com/rar-file/claude-
   Only after `chatIdleMin` (10) minutes with no activity does it become real "Idle" with the stats rotation.
 - Card setup: Working = main line only · Chatting = main line only · Idle = usage %, lifetime hours/prompts, lifetime tokens/tools.
 
+- Activity Controller link: `src/controller-light.js` (+ `src/controller-client.mjs`, a copy) and a few lines in `pushPresence`.
+  The daemon checks in at `127.0.0.1:47400` every 2 s. A red light clears the card. No controller = works alone.
+  The CLI pause shows as "Own switch off" in the controller. The controller switch does not write the pause file yet.
+
+## Active tasks
+
+- Activity Controller link (Phase 2): task file `handoffs/phase2-connect-projects.md` in the DiscordActivityController repo.
+
 ## Ideas to build (code changes)
 
 - Every GitHub-private repo shows as "PrivateRepo" automatically (today it's hidden unless the repo has a `.claude-rpc.json`).
